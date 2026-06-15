@@ -6,7 +6,7 @@ long_description = (here / "README.md").read_text(encoding="utf-8")
 
 setup(
     name="pandatools",
-    version="2.0.5",
+    version="2.1.0",
     packages=find_packages(),
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -15,7 +15,6 @@ setup(
     license="MIT",
     classifiers=[
         "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
 )
