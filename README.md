@@ -1,14 +1,52 @@
-# 🐼 Pandatools: Smart Data Cleaning Accessor
+# 🧠 Pandatools – SƠN AI DataFrame Cleaner
 
-**Pandatools** là một phần mở rộng (accessor) cho Pandas DataFrame, giúp tự động hóa quá trình phân tích chất lượng dữ liệu và thực hiện các bước làm sạch (cleaning) phổ biến chỉ với một dòng mã.
+**Pandatools** là một phần mở rộng (accessor) cho Pandas DataFrame, giúp tự động hóa quá trình phân tích chất lượng dữ liệu, làm sạch (cleaning) và tích hợp AI (SƠN AI) để xử lý dữ liệu thông minh chỉ với vài dòng mã.
+
+---
 
 ## 🚀 Tính năng chính
 
 - **`.clean.intoo()`**: Hiển thị bảng phân tích dữ liệu cực đẹp trên Terminal với các gợi ý xử lý và mã code thực thi đi kèm.
-- **`.clean.fix_dtypes()`**: Tự động nhận diện và chuyển đổi kiểu dữ liệu (vd: chuỗi số -> số, chuỗi ngày tháng -> datetime, danh mục lặp lại -> category).
-- **`.clean.fill_missing()`**: Điền giá trị thiếu thông minh dựa trên kiểu dữ liệu của từng cột.
+- **`.clean.summary()`**: Thống kê chi tiết từng cột: min, max, mean, skewness, unique values.
+- **`.clean.info_memory()`**: Kiểm tra memory usage chi tiết từng cột, top 5 cột nặng nhất.
+- **`.clean.auto()`**: Tự động làm sạch toàn bộ DataFrame (không cần API) chỉ với 1 dòng lệnh.
+- **`.clean.fix_dtypes()`**: Tự động nhận diện và chuyển đổi kiểu dữ liệu (object chứa số → numeric, object chứa ngày → datetime, ít unique → category, float nguyên → Int64, int 0/1 → bool).
+- **`.clean.fill_missing()`**: Điền giá trị thiếu thông minh (numeric → median, datetime → forward fill, string → mode hoặc "Unknown").
 - **`.clean.strip_strings()`**: Loại bỏ khoảng trắng thừa ở đầu/cuối của tất cả các cột văn bản.
-- **Hỗ trợ AI**: Xuất báo cáo dưới dạng JSON để tích hợp vào các pipeline tự động hóa hoặc huấn luyện AI.
+- **`.clean.drop_dupes()`**: Xóa hàng trùng lặp, thông báo chính xác số lượng đã xóa.
+- **`.clean.normalize_text()`**: Chuẩn hóa text Unicode NFC (tốt cho tiếng Việt), xóa multiple spaces.
+- **`.clean.clip_outliers()`**: Phát hiện và xử lý outliers bằng phương pháp IQR.
+- **`.clean.normalize_column_names()`**: Chuẩn hóa tên cột (lowercase, thay space/dấu gạch bằng underscore).
+- **`.clean.optimize_memory()`**: Tối ưu memory (downcast int64, float64).
+- **`.clean.remove_uninformative()`**: Xóa cột >70% missing hoặc cột chỉ có 1 giá trị duy nhất.
+- **🤖 SƠN AI (`.clean.son()`)**: Tích hợp AI (OpenAI GPT-4o, Gemini) để viết code xử lý dữ liệu theo ngữ cảnh thực tế, có cache thông minh, fallback tự động.
+- **🐘 Big Data Mode (`.clean.bigdata()`)**: Tự động chunking & sampling cho dataset hàng triệu dòng.
+- **📊 Biểu đồ**: 8 loại biểu đồ (auto-detect, bar, line, pie, scatter, hist, box, heatmap).
+- **💾 Export**: Lưu CSV (utf-8-sig), Excel, Parquet.
+
+---
+
+## 🚀 Tính năng chính
+
+- **`.clean.intoo()`**: Hiển thị bảng phân tích dữ liệu cực đẹp trên Terminal với các gợi ý xử lý và mã code thực thi đi kèm.
+- **`.clean.summary()`**: Thống kê chi tiết từng cột: min, max, mean, skewness, unique values.
+- **`.clean.info_memory()`**: Kiểm tra memory usage chi tiết từng cột, top 5 cột nặng nhất.
+- **`.clean.auto()`**: Tự động làm sạch toàn bộ DataFrame (không cần API) chỉ với 1 dòng lệnh.
+- **`.clean.fix_dtypes()`**: Tự động nhận diện và chuyển đổi kiểu dữ liệu (object chứa số → numeric, object chứa ngày → datetime, ít unique → category, float nguyên → Int64, int 0/1 → bool).
+- **`.clean.fill_missing()`**: Điền giá trị thiếu thông minh (numeric → median, datetime → forward fill, string → mode hoặc "Unknown").
+- **`.clean.strip_strings()`**: Loại bỏ khoảng trắng thừa ở đầu/cuối của tất cả các cột văn bản.
+- **`.clean.drop_dupes()`**: Xóa hàng trùng lặp, thông báo chính xác số lượng đã xóa.
+- **`.clean.normalize_text()`**: Chuẩn hóa text Unicode NFC (tốt cho tiếng Việt), xóa multiple spaces.
+- **`.clean.clip_outliers()`**: Phát hiện và xử lý outliers bằng phương pháp IQR.
+- **`.clean.normalize_column_names()`**: Chuẩn hóa tên cột (lowercase, thay space/dấu gạch bằng underscore).
+- **`.clean.optimize_memory()`**: Tối ưu memory (downcast int64, float64).
+- **`.clean.remove_uninformative()`**: Xóa cột >70% missing hoặc cột chỉ có 1 giá trị duy nhất.
+- **🤖 SƠN AI (`.clean.son()`)**: Tích hợp AI (OpenAI GPT-4o, Gemini) để viết code xử lý dữ liệu theo ngữ cảnh thực tế, có cache thông minh, fallback tự động.
+- **🐘 Big Data Mode (`.clean.bigdata()`)**: Tự động chunking & sampling cho dataset hàng triệu dòng.
+- **📊 Biểu đồ**: 8 loại biểu đồ (auto-detect, bar, line, pie, scatter, hist, box, heatmap).
+- **💾 Export**: Lưu CSV (utf-8-sig), Excel, Parquet.
+
+---
 
 ## 📦 Cài đặt
 
@@ -16,83 +54,3 @@ Cực kỳ đơn giản, không yêu cầu cấu hình máy phức tạp:
 
 ```bash
 pip install git+https://github.com/sonbuwin-beep/pandatools.git
-```
-
-## 🛠 Cách sử dụng
-```python
-import pandas as pd
-import pandatools # Đăng ký accessor .clean
-
-df = pd.read_csv("data.csv")
-```
-
----
-
-## 🛠 Các hàm chi tiết
-
-### 1. Phân tích dữ liệu với `.intoo()`
-Đây là tính năng mạnh mẽ nhất. Nó sẽ quét toàn bộ DataFrame và chỉ ra các vấn đề như: Missing values, Outliers, Sai kiểu dữ liệu, Duplicate IDs...
-
-```python
-# Hiển thị bảng màu trên Terminal
-df.clean.intoo()
-
-# Trả về JSON để dùng cho các ứng dụng khác
-report_json = df.clean.intoo(as_json=True)
-```
-
-### 2. Tự động sửa kiểu dữ liệu với `.fix_dtypes()`
-Hàm này giúp bạn tiết kiệm thời gian ép kiểu thủ công:
-- Chuyển `object` sang `numeric` nếu hơn 90% dữ liệu là số.
-- Chuyển `object` sang `datetime` nếu định dạng ngày tháng hợp lệ.
-- Chuyển `float` sang `Int64` nếu thực chất là số nguyên nhưng có chứa NaN.
-- Chuyển sang `bool` cho các cột chỉ chứa 0 và 1.
-
-```python
-df = df.clean.fix_dtypes()
-```
-
-### 3. Làm sạch chuỗi với `.strip_strings()`
-Xóa các khoảng trắng vô hình gây lỗi khi so sánh dữ liệu.
-
-```python
-df = df.clean.strip_strings(lowercase=True) # Strip và chuyển về chữ thường
-```
-
-### 4. Xử lý giá trị thiếu với `.fill_missing()`
-Tự động áp dụng chiến lược phù hợp:
-- Cột số: Fill bằng `median` hoặc `mean`.
-- Cột Datetime: Fill bằng `ffill` (forward fill).
-- Cột Phân loại (Category/Object): Fill bằng nhãn `"Unknown"`.
-
-```python
-df = df.clean.fill_missing(numeric_strategy="median")
-```
-
-### 5. Loại bỏ trùng lặp với `.drop_dupes()`
-Thông báo chính xác số lượng hàng bị xóa.
-
-```python
-df = df.clean.drop_dupes(subset=['id'])
-```
-
----
-
-## 💡 Ví dụ thực tế (Pipeline)
-
-Bạn có thể kết chuỗi các lệnh để làm sạch dữ liệu cực nhanh:
-
-```python
-df_clean = (df.clean
-    .drop_dupes()
-    .strip_strings()
-    .fix_dtypes()
-    .fill_missing()
-)
-
-df_clean.clean.intoo() # Kiểm tra lại kết quả
-```
-
-## 📝 Lưu ý
-- Thư viện yêu cầu `pandas` và `numpy`.
-- Các cảnh báo về định dạng ngày tháng cũ đã được tối ưu hóa để chạy mượt mà trên các phiên bản Pandas mới nhất (2.0+).
