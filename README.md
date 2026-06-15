@@ -283,5 +283,5 @@ Khi không truyền key, hệ thống tự động thử lần lượt 3 biến 
 **Author:** Sơn Lê
 
 =======
-pip install git+https://github.com/sonbuwin-beep/pandatools.git
+pip install pandatools
 >>>>>>> 31d24c1e421edab5b1d93647aba7bb64f62851ec
