@@ -2,7 +2,7 @@
 
 **Version 2.0. | Tác giả: Sơn Lê**
 
-<<<<<<< HEAD
+
 `pandatools` là thư viện Python mở rộng Pandas DataFrame với accessor `clean`, cung cấp hơn 25 hàm phân tích, làm sạch, trực quan hóa, và tối ưu dữ liệu. Điểm nổi bật là **SƠN AI Pipeline** – cơ chế gọi AI (OpenAI GPT-4o, Gemini) để sinh code xử lý DataFrame theo ngữ cảnh thực tế, có cache thông minh và fallback khi API lỗi. Phiên bản 2.0 bổ sung Big Data mode (chunking, sampling), phân tích màu trên terminal, Unicode NFC cho tiếng Việt, memory optimization, và hệ thống task có thể mở rộng qua decorator `@son_ai`.
 =======
 ---
@@ -26,7 +26,7 @@
 - **🐘 Big Data Mode (`.clean.bigdata()`)**: Tự động chunking & sampling cho dataset hàng triệu dòng.
 - **📊 Biểu đồ**: 8 loại biểu đồ (auto-detect, bar, line, pie, scatter, hist, box, heatmap).
 - **💾 Export**: Lưu CSV (utf-8-sig), Excel, Parquet.
->>>>>>> 31d24c1e421edab5b1d93647aba7bb64f62851ec
+
 
 ---
 
@@ -277,11 +277,9 @@ Code do AI sinh được cache tại `~/.son_cache/` dưới dạng file `.py`, 
 
 Khi không truyền key, hệ thống tự động thử lần lượt 3 biến trên.
 
----
 
-**License:** MIT
 **Author:** Sơn Lê
 
 =======
-pip install pandatools
->>>>>>> 31d24c1e421edab5b1d93647aba7bb64f62851ec
+*pip install pandatools*
+
