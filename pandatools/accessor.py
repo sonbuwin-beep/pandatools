@@ -1,37 +1,3 @@
-"""
-pandatools – SƠN AI DataFrame Cleaner
-=====================================
-Tác giả: Sơn Lê
-Version: 2.0
-
-CÁCH DÙNG:
-    # Bước 1: Khởi tạo SƠN AI (phải làm trước khi dùng son)
-    df.clean.ai_son(model="gpt-4o", key="sk-...")         # Key trực tiếp
-    df.clean.ai_son(model="gpt-4o", key=1)                # Key từ env vị trí 1
-    df.clean.ai_son(model="gpt-4o")                       # Key từ env mặc định
-    
-    # Bước 2: Dùng pipeline
-    df.clean.son([1,2,4,7])        # SƠN AI pipeline
-    df.clean.auto()                # Auto (không cần API)
-    df.clean.intoo()               # Phân tích dữ liệu
-    
-    # Bước 3: Xem hướng dẫn
-    df.clean.hd()                  # Hiển thị tất cả hàm
-    df.clean.list()                # Xem danh sách task
-    
-    # Big Data mode
-    df.clean.bigdata(start=True)
-    
-    # Biểu đồ
-    df.clean.bd('age')
-    df.clean.bd_bar('category', 'price')
-    
-    # Lưu file
-    df.clean.csv('output.csv')
-    df.clean.excel('output.xlsx')
-    df.clean.to_parquet('output.parquet')
-"""
-
 import json
 import warnings
 import hashlib
@@ -40,9 +6,6 @@ import pandas as pd
 import numpy as np
 from typing import Optional, List, Dict, Any, Union
 
-# ============================================================================
-# COLOR SYSTEM
-# ============================================================================
 _RESET  = "\033[0m"
 _BOLD   = "\033[1m"
 _GREEN  = "\033[32m"
@@ -53,36 +16,27 @@ _DIM    = "\033[2m"
 _MAGENTA = "\033[35m"
 _BLUE   = "\033[34m"
 
-# ============================================================================
-# CONFIG
-# ============================================================================
 class SonConfig:
-    """Cấu hình SƠN AI toàn cục"""
     model = None
     api_key = None
     provider = "openai"
     is_ready = False
     
     ENV_KEYS = [
-        "OPENAI_API_KEY",      # Vị trí 1
-        "SON_AI_KEY",          # Vị trí 2
-        "AI_API_KEY",          # Vị trí 3
+        "OPENAI_API_KEY",
+        "SON_AI_KEY",
+        "AI_API_KEY",
     ]
 
 class BigDataConfig:
-    """Cấu hình Big Data"""
     enabled = False
     chunk_size = 100_000
     sample_size = 10_000
     low_memory = False
 
-# ============================================================================
-# SƠN AI TASK REGISTRY
-# ============================================================================
 TASKS: Dict[int, Dict] = {}
 
 def son_ai(task_id: int, prompt: str, desc: str = ""):
-    """Đăng ký task với prompt AI"""
     def wrap(fn):
         TASKS[task_id] = {
             "id": task_id, 
@@ -92,10 +46,6 @@ def son_ai(task_id: int, prompt: str, desc: str = ""):
         }
         return fn
     return wrap
-
-# ============================================================================
-# ĐĂNG KÝ TASK MẶC ĐỊNH
-# ============================================================================
 
 @son_ai(1, "Xóa tất cả hàng trùng lặp (duplicate rows) dựa trên tất cả columns", "🗑️  Xóa duplicate rows")
 def _t1(df): 
@@ -197,11 +147,7 @@ def _t10(df):
         df[c] = pd.to_numeric(df[c], downcast='float')
     return df
 
-# ============================================================================
-# HÀM PHÂN TÍCH
-# ============================================================================
 def _analyze(col: pd.Series) -> List[Dict[str, str]]:
-    """Phân tích 1 cột, trả về list các vấn đề + gợi ý + code snippet."""
     name   = col.name
     dtype  = col.dtype
     n      = len(col)
@@ -209,7 +155,6 @@ def _analyze(col: pd.Series) -> List[Dict[str, str]]:
     pct    = n_miss / n if n > 0 else 0
     items: List[Dict[str, str]] = []
 
-    # Missing values
     if pct > 0.6:
         items.append({
             "issue": f"Quá nhiều missing ({n_miss}/{n} = {pct*100:.1f}%)",
@@ -290,7 +235,6 @@ def _analyze(col: pd.Series) -> List[Dict[str, str]]:
                 "code": f"df['{name}'] = df['{name}'].astype(bool)",
             })
 
-    # Constant column
     if n > 0 and col.nunique() <= 1:
         items.append({
             "issue": "Cột chỉ có 1 giá trị duy nhất (Constant)",
@@ -298,7 +242,6 @@ def _analyze(col: pd.Series) -> List[Dict[str, str]]:
             "code": f"df = df.drop(columns=['{name}'])",
         })
 
-    # Duplicate ID
     if col.name and str(col.name).lower() in {"id", "key", "index", "uuid"}:
         n_dup = int(col.duplicated().sum())
         if n_dup > 0:
@@ -308,7 +251,6 @@ def _analyze(col: pd.Series) -> List[Dict[str, str]]:
                 "code": f"df = df.drop_duplicates(subset=['{name}'])",
             })
 
-    # Outlier
     if pd.api.types.is_numeric_dtype(dtype) and not pd.api.types.is_bool_dtype(dtype):
         non_null = col.dropna()
         if len(non_null) > 10:
@@ -341,11 +283,7 @@ def _flat_code(items: List[Dict]) -> str:
     return " ; ".join(it["code"].replace("\n", " ") for it in items)
 
 
-# ============================================================================
-# AI CODE GENERATOR
-# ============================================================================
 def _get_api_key(key=None):
-    """Lấy API key từ nhiều nguồn"""
     if isinstance(key, int):
         if 1 <= key <= len(SonConfig.ENV_KEYS):
             env_key = os.environ.get(SonConfig.ENV_KEYS[key-1], "")
@@ -364,7 +302,6 @@ def _get_api_key(key=None):
 
 
 def _ai_code(prompt: str, df: pd.DataFrame) -> str:
-    """Gọi AI viết code, có cache"""
     
     if not SonConfig.is_ready:
         print(f"{_RED}❌ SƠN AI chưa khởi tạo! Dùng: df.clean.ai_son(model='gpt-4o', key='...'){_RESET}")
@@ -440,11 +377,7 @@ def clean(df):"""
         return None
 
 
-# ============================================================================
-# SƠN AI PIPELINE RUNNER
-# ============================================================================
 def son(df: pd.DataFrame, tasks: List[int], verbose: bool = True) -> pd.DataFrame:
-    """Chạy SƠN AI pipeline"""
     
     if not SonConfig.is_ready:
         print(f"{_RED}❌ SƠN AI chưa khởi tạo!{_RESET}")
@@ -504,11 +437,7 @@ def son(df: pd.DataFrame, tasks: List[int], verbose: bool = True) -> pd.DataFram
     return result
 
 
-# ============================================================================
-# DANH SÁCH TASK
-# ============================================================================
 def list_tasks():
-    """In danh sách tất cả task"""
     print(f"\n{_BOLD}{_BLUE}📋 SƠN AI TASKS{_RESET}")
     print(f"{_BOLD}{_BLUE}{'='*60}{_RESET}\n")
     
@@ -525,11 +454,7 @@ def list_tasks():
     print()
 
 
-# ============================================================================
-# HƯỚNG DẪN
-# ============================================================================
 def _print_hd():
-    """In hướng dẫn đầy đủ về thư viện"""
     
     print(f"""
 {_BOLD}{_BLUE}{'='*70}{_RESET}
@@ -760,16 +685,12 @@ def _print_hd():
 """)
 
 
-# ============================================================================
-# PANDAS ACCESSOR
-# ============================================================================
 @pd.api.extensions.register_dataframe_accessor("clean")
 class DataFrameCleaner:
     def __init__(self, df: pd.DataFrame):
         self._obj = df
 
     def _update(self, new_df: pd.DataFrame, inplace: bool) -> pd.DataFrame:
-        """Cập nhật DataFrame"""
         if inplace:
             if (new_df.shape == self._obj.shape and 
                 list(new_df.columns) == list(self._obj.columns)):
@@ -778,12 +699,7 @@ class DataFrameCleaner:
                 warnings.warn(f"⚠️ Shape mismatch: {self._obj.shape} → {new_df.shape}")
         return new_df
 
-    # ========================================================================
-    # 1. HÀM PHÂN TÍCH
-    # ========================================================================
-    
     def intoo(self, as_json: bool = False, max_rows: Optional[int] = None, indent: int = 2):
-        """Phân tích DataFrame + gợi ý code"""
         df = self._obj
         
         if BigDataConfig.enabled and len(df) > BigDataConfig.sample_size:
@@ -892,7 +808,6 @@ class DataFrameCleaner:
         return pd.DataFrame(records)
 
     def summary(self, as_json: bool = False):
-        """Thống kê: min, max, mean, skewness"""
         df = self._obj
         rows = []
         for col in df.columns:
@@ -928,7 +843,6 @@ class DataFrameCleaner:
         return result
 
     def info_memory(self):
-        """Xem memory usage"""
         df = self._obj
         total = df.memory_usage(deep=True).sum() / 1024**2
         
@@ -945,12 +859,7 @@ class DataFrameCleaner:
         print()
         return self._obj
 
-    # ========================================================================
-    # 2. HÀM LÀM SẠCH THỦ CÔNG
-    # ========================================================================
-    
     def drop_dupes(self, subset=None, keep: str = "first", inplace: bool = False):
-        """Xóa hàng trùng lặp"""
         df = self._obj.copy()
         n_before = len(df)
         df = df.drop_duplicates(subset=subset, keep=keep)
@@ -960,7 +869,6 @@ class DataFrameCleaner:
         return self._update(df, inplace)
 
     def strip_strings(self, lowercase: bool = False, inplace: bool = False):
-        """Strip khoảng trắng string columns"""
         df = self._obj.copy()
         str_cols = df.select_dtypes(include=['object', 'string']).columns
         for col in str_cols:
@@ -972,7 +880,6 @@ class DataFrameCleaner:
         return self._update(df, inplace)
 
     def fix_dtypes(self, inplace: bool = False):
-        """Tự động sửa kiểu dữ liệu"""
         df = self._obj.copy()
         report = []
         for col in df.select_dtypes(include=['object']).columns:
@@ -1016,7 +923,6 @@ class DataFrameCleaner:
                      datetime_strategy: str = "ffill",
                      add_indicator: bool = True,
                      inplace: bool = False):
-        """Điền giá trị thiếu thông minh"""
         df = self._obj.copy()
         report = []
         for col in df.columns:
@@ -1048,7 +954,6 @@ class DataFrameCleaner:
         return self._update(df, inplace)
 
     def remove_uninformative(self, missing_threshold: float = 0.7, inplace: bool = False):
-        """Xóa cột >70% missing hoặc constant"""
         df = self._obj.copy()
         to_drop = []
         for col in df.columns:
@@ -1060,7 +965,6 @@ class DataFrameCleaner:
         return self._update(df, inplace)
 
     def normalize_text(self, columns: List[str] = None, inplace: bool = False):
-        """Chuẩn hóa text Unicode NFC"""
         import unicodedata
         df = self._obj.copy()
         target = columns or df.select_dtypes(include=['object', 'string']).columns
@@ -1075,7 +979,6 @@ class DataFrameCleaner:
         return self._update(df, inplace)
 
     def clip_outliers(self, strategy: str = "iqr", multiplier: float = 1.5, inplace: bool = False):
-        """Xử lý outliers bằng IQR"""
         df = self._obj.copy()
         report = []
         for col in df.select_dtypes(include=[np.number]).columns:
@@ -1093,7 +996,6 @@ class DataFrameCleaner:
         return self._update(df, inplace)
 
     def normalize_column_names(self, inplace: bool = False):
-        """Chuẩn hóa tên cột"""
         df = self._obj.copy()
         old_cols = df.columns.tolist()
         new_cols = [str(c).strip().lower().replace(' ', '_').replace('-', '_')[:50] for c in old_cols]
@@ -1115,7 +1017,6 @@ class DataFrameCleaner:
         return self._update(df, inplace)
 
     def optimize_memory(self, inplace: bool = False):
-        """Tối ưu memory"""
         df = self._obj.copy()
         initial = df.memory_usage(deep=True).sum() / 1024**2
         for col in df.select_dtypes(include=['int64']).columns:
@@ -1127,7 +1028,6 @@ class DataFrameCleaner:
         return self._update(df, inplace)
 
     def auto(self, inplace: bool = False):
-        """Tự động làm sạch (không cần API)"""
         mode = f"{_YELLOW}[BIG DATA]{_RESET} " if BigDataConfig.enabled else ""
         print(f"\n{_BOLD}{_MAGENTA}⚡ AUTO CLEAN {mode}(No API){_RESET}")
         
@@ -1146,24 +1046,7 @@ class DataFrameCleaner:
         print(f"{_GREEN}✅ Hoàn tất: {self._obj.shape} → {df.shape}{_RESET}\n")
         return self._update(df, inplace)
 
-    # ========================================================================
-    # 3. HÀM SƠN AI
-    # ========================================================================
-    
     def ai_son(self, model: str = "gpt-4o", key: Union[str, int] = None, provider: str = "openai"):
-        """
-        Khởi tạo SƠN AI (PHẢI GỌI TRƯỚC KHI DÙNG son)
-        
-        Args:
-            model: Tên model AI
-                OpenAI: "gpt-4o", "gpt-4-turbo", "gpt-4", "gpt-3.5-turbo"
-                Gemini: "gemini-pro", "gemini-1.5-pro"
-            key: API key
-                - str: Key trực tiếp "sk-abc123..."
-                - int: Vị trí key trong env (1=OPENAI_API_KEY, 2=SON_AI_KEY, 3=AI_API_KEY)
-                - None: Tự động tìm trong env
-            provider: "openai" hoặc "gemini"
-        """
         api_key = _get_api_key(key)
         
         if not api_key:
@@ -1189,14 +1072,6 @@ class DataFrameCleaner:
         return self._obj
 
     def son(self, tasks: List[int] = None):
-        """
-        Chạy SƠN AI pipeline (phải gọi ai_son trước)
-        
-        Examples:
-            df.clean.son([1, 2, 4, 7])              # Custom
-            df.clean.son([1, 2, 3, 4, 5, 6])        # Basic
-            df.clean.son([1, 2, 3, 4, 5, 7, 8, 6, 10])  # Advanced
-        """
         if not SonConfig.is_ready:
             print(f"{_RED}❌ SƠN AI chưa khởi tạo!{_RESET}")
             print(f"{_YELLOW}👉 Dùng: df.clean.ai_son(model='gpt-4o', key='...'){_RESET}")
@@ -1207,15 +1082,9 @@ class DataFrameCleaner:
 
     @staticmethod
     def list():
-        """Xem danh sách tất cả SƠN AI task"""
         list_tasks()
 
-    # ========================================================================
-    # 4. BIG DATA
-    # ========================================================================
-    
     def bigdata(self, start: bool = True, chunk_size: int = 100_000, sample_size: int = 10_000):
-        """Bật/tắt Big Data mode"""
         if start:
             BigDataConfig.enabled = True
             BigDataConfig.chunk_size = chunk_size
@@ -1234,12 +1103,7 @@ class DataFrameCleaner:
             print(f"{_YELLOW}🐘 BIG DATA MODE: OFF{_RESET}")
         return self._obj
 
-    # ========================================================================
-    # 5. BIỂU ĐỒ
-    # ========================================================================
-    
     def bd(self, x=None, y=None, z=None, kind=None, save=None, title=None, **kwargs):
-        """Tự động chọn và vẽ biểu đồ"""
         try:
             import matplotlib.pyplot as plt
             import seaborn as sns
@@ -1310,7 +1174,6 @@ class DataFrameCleaner:
         plt.show()
 
     def bd_bar(self, x, y=None, z=None, save=None, title=None, **kwargs):
-        """Bar chart"""
         try:
             import matplotlib.pyplot as plt
             df = self._obj
@@ -1335,7 +1198,6 @@ class DataFrameCleaner:
             print(f"{_RED}❌ Cần cài: pip install matplotlib{_RESET}")
 
     def bd_line(self, x, y=None, z=None, save=None, title=None, **kwargs):
-        """Line chart"""
         try:
             import matplotlib.pyplot as plt
             df = self._obj
@@ -1362,7 +1224,6 @@ class DataFrameCleaner:
             print(f"{_RED}❌ Cần cài: pip install matplotlib{_RESET}")
 
     def bd_pie(self, col, save=None, title=None, **kwargs):
-        """Pie chart"""
         try:
             import matplotlib.pyplot as plt
             df = self._obj
@@ -1378,7 +1239,6 @@ class DataFrameCleaner:
             print(f"{_RED}❌ Cần cài: pip install matplotlib{_RESET}")
 
     def bd_scatter(self, x, y, z=None, save=None, title=None, **kwargs):
-        """Scatter plot"""
         try:
             import matplotlib.pyplot as plt
             import seaborn as sns
@@ -1401,7 +1261,6 @@ class DataFrameCleaner:
             print(f"{_RED}❌ Cần cài: pip install matplotlib seaborn{_RESET}")
 
     def bd_hist(self, col, bins=30, save=None, title=None, **kwargs):
-        """Histogram"""
         try:
             import matplotlib.pyplot as plt
             import seaborn as sns
@@ -1418,7 +1277,6 @@ class DataFrameCleaner:
             print(f"{_RED}❌ Cần cài: pip install matplotlib seaborn{_RESET}")
 
     def bd_box(self, x, y=None, save=None, title=None, **kwargs):
-        """Boxplot"""
         try:
             import matplotlib.pyplot as plt
             import seaborn as sns
@@ -1440,7 +1298,6 @@ class DataFrameCleaner:
             print(f"{_RED}❌ Cần cài: pip install matplotlib seaborn{_RESET}")
 
     def bd_heatmap(self, save=None, title=None, **kwargs):
-        """Correlation heatmap"""
         try:
             import matplotlib.pyplot as plt
             import seaborn as sns
@@ -1456,17 +1313,11 @@ class DataFrameCleaner:
         except ImportError:
             print(f"{_RED}❌ Cần cài: pip install matplotlib seaborn{_RESET}")
 
-    # ========================================================================
-    # 6. HÀM TIỆN ÍCH
-    # ========================================================================
-    
     @staticmethod
     def hd():
-        """Hiển thị hướng dẫn đầy đủ về thư viện"""
         _print_hd()
 
     def csv(self, filename: str):
-        """Lưu DataFrame ra CSV (utf-8-sig cho tiếng Việt)"""
         if not filename.endswith('.csv'):
             filename += '.csv'
         try:
@@ -1474,10 +1325,7 @@ class DataFrameCleaner:
             print(f"✅ Đã lưu CSV: {_CYAN}{filename}{_RESET}")
         except Exception as e:
             print(f"{_RED}❌ Lỗi: {e}{_RESET}")
-        return self._obj
-
-    def excel(self, filename: str):
-        """Lưu DataFrame ra Excel"""
+        return self._obj    def excel(self, filename: str):
         if not filename.endswith('.xlsx'):
             filename += '.xlsx'
         try:
@@ -1488,7 +1336,6 @@ class DataFrameCleaner:
         return self._obj
 
     def to_parquet(self, filename: str):
-        """Lưu DataFrame ra Parquet (nhanh hơn CSV 10x)"""
         if not filename.endswith('.parquet'):
             filename += '.parquet'
         try:
@@ -1500,9 +1347,6 @@ class DataFrameCleaner:
         return self._obj
 
 
-# ============================================================================
-# EXPORT
-# ============================================================================
 __all__ = [
     'son',
     'son_ai',
